@@ -248,11 +248,18 @@ Spec section: §28.
 
 ---
 
-## Spec
+## Repo contents
 
-Full specification: [rop-v1-rc1-protocol.md](./rop-v1-rc1-protocol.md)
+| Path | What it is |
+|---|---|
+| [rop-v1-rc1-protocol.md](./rop-v1-rc1-protocol.md) | Full normative specification |
+| [security.md](./security.md) | Threat model and operator checklist (companion to spec §28) |
+| [conformance.md](./conformance.md) | Requirement → spec § → fixture map |
+| [schema/](./schema/) | JSON Schemas: `registration`, `response-receipt`, `response-outcome`, `audit-record`. Encode the wire format and protocol invariants (token regex, forbidden policy combinations, idempotency-key shape) |
+| [fixtures/](./fixtures/) | F01 through F15 normative conformance fixtures from spec §36, as individual JSON files an automated runner can consume |
+| [LICENSE](./LICENSE) | MIT |
 
-Key sections:
+### Spec key sections
 
 - §7 Token format
 - §8 Token embedding by channel
