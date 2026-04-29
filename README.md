@@ -227,6 +227,30 @@ Each existing tool has a piece. ROP combines them at the protocol layer.
 
 ---
 
+## Prior art
+
+ROP is a synthesis, not an invention. The pieces it builds on exist in fragmented form across email standards, plus-addressing, signed webhooks, inbound mail parsers, and helpdesk reply-by-email systems. A public-source review (see [priorart.md](./priorart.md)) found no single public protocol that combines them under one transport-neutral contract for action completion.
+
+| ROP feature | Closest prior art | Coverage |
+|---|---|---|
+| Reply correlation by token | RFC 5233 subaddressing; Postmark `MailboxHash`; GitHub reply-to addresses; Discourse `reply_key` | Strong but vendor-fragmented |
+| Email reply correlation by thread | RFC 5322 headers; Gmail threading; Microsoft Graph custom headers | Mature, email-only |
+| Adapter-authenticated callbacks | RFC 9421 HTTP Message Signatures; Slack, GitHub, Twilio, Mailgun signing schemes | Mature for HTTP, no shared profile |
+| Public-ingest with async verification | WebSub 202-and-verify | Direct analogue, HTTP-only |
+| Idempotent receipt handling | GitHub `X-GitHub-Delivery`; Slack `event_id`; Twilio `MessageSid`; Stripe event IDs | Per-platform, no cross-platform standard |
+| Quoted-history rejection | GitHub `email_reply_parser`; Mailgun Talon; Postmark `StrippedTextReply` | Heuristic libraries, no protocol rule |
+| Registration / lease / revocation | WebSub subscriptions, lease, unsubscribe | Direct analogue, HTTP-only |
+| Correlation Identifier abstraction | Enterprise Integration Patterns; WS-Addressing `MessageID` / `ReplyTo` | Conceptual ancestor, transport-neutral |
+| Cross-channel transport-neutral action completion | none found | The synthesis is novel |
+
+**Closest standards ancestors:** RFC 5322 (email message format), RFC 5233 (subaddressing), RFC 7601 (`Authentication-Results`), RFC 9421 (HTTP message signatures), WebSub (subscription, verification, lease), WS-Addressing (`MessageID` / `ReplyTo`), Enterprise Integration Patterns (Correlation Identifier).
+
+**Closest production examples:** GitHub reply-by-email; Postmark inbound webhook with `MailboxHash` and `StrippedTextReply`; SendGrid Inbound Parse; Mailgun routes; Amazon SES receipt rules; Slack signed requests + message metadata; Twilio webhook signatures + `MessageSid`; Gmail threading rules; Microsoft Graph custom headers; Discourse `reply_key`; Chatwoot conversation continuity; FreeScout email-reply restrictions.
+
+The full review covers each of these with citations, plus the relevant patent landscape (US7406501B2, US8150924B2, US20180115595A1) and recommended compatibility profiles for v1.0 final: [priorart.md](./priorart.md).
+
+---
+
 ## Security highlights
 
 ROP's threat model (§28) assumes attackers may see leaked tokens, replay webhooks, forge emails, edit subjects, race responses, and forward old threads containing consumed tokens.
@@ -255,6 +279,7 @@ Spec section: §28.
 | [rop-v1-rc1-protocol.md](./rop-v1-rc1-protocol.md) | Full normative specification |
 | [security.md](./security.md) | Threat model and operator checklist (companion to spec §28) |
 | [conformance.md](./conformance.md) | Requirement → spec § → fixture map |
+| [priorart.md](./priorart.md) | Prior-art review across standards, vendor APIs, OSS, and the patent landscape |
 | [schema/](./schema/) | JSON Schemas: `registration`, `response-receipt`, `response-outcome`, `audit-record`. Encode the wire format and protocol invariants (token regex, forbidden policy combinations, idempotency-key shape) |
 | [fixtures/](./fixtures/) | F01 through F15 normative conformance fixtures from spec §36, as individual JSON files an automated runner can consume |
 | [LICENSE](./LICENSE) | MIT |
