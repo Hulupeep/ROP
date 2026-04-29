@@ -259,7 +259,7 @@ Required mitigations:
 
 - **130-bit token entropy** with cryptographically secure generation
 - **Token canonicalization** with strict regex matching; no padding, no whitespace, no shortened tokens
-- **Adapter authentication** for every state-changing receipt (HMAC, mTLS, or signed JWT in `trusted_adapter` mode)
+- **Adapter authentication** for every state-changing receipt — two conforming profiles in `trusted_adapter` mode: `http_message_signatures` (RFC 9421) and `hmac_sha256` (with mTLS and signed JWT also permitted)
 - **Sender authorization** evaluated against an explicit policy; tokens are never proof of authority
 - **Idempotency keys** on every receipt; duplicates return the prior outcome without reapplying state
 - **Atomic locking** on registration and action rows; concurrent valid responders cannot double-complete

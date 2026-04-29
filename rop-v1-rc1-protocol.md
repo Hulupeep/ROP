@@ -311,6 +311,24 @@ A response token MUST be:
 
 A response token MUST NOT be the only condition for completing an action.
 
+A response token body MUST be derived solely from a cryptographically secure random source.
+
+A response token body MUST NOT encode, embed, derive from, or reveal:
+
+- tenant identifiers
+- workspace identifiers
+- action identifiers
+- action titles
+- sender addresses
+- recipient addresses
+- user identifiers
+- agent identifiers
+- timestamps
+- business metadata
+- personally identifying data
+
+Any meaning associated with a token MUST live in the Action Owner's registration record, not in the token body.
+
 ---
 
 ## 8. Token embedding by channel
@@ -517,13 +535,49 @@ trusted_adapter
 public_ingest
 ```
 
-### 10.2 trusted_adapter mode
+### 10.2 Adapter authentication profiles
+
+A `trusted_adapter` endpoint MUST authenticate adapter-submitted response receipts.
+
+ROP v1 defines two conforming adapter-authentication profiles:
+
+1. `http_message_signatures`
+2. `hmac_sha256`
+
+The `http_message_signatures` profile uses RFC 9421 HTTP Message Signatures. Implementations MAY use RFC 9421 directly to create and verify a digital signature or message authentication code over the HTTP request submitted by the adapter.
+
+When `http_message_signatures` is used, the covered components MUST include, at minimum:
+
+```text
+@method
+@path
+content-digest
+rop-adapter-id
+rop-timestamp
+rop-nonce
+```
+
+The Action Owner MUST reject requests with invalid signatures, missing required covered components, replayed nonces, or timestamps outside the declared replay window.
+
+The `hmac_sha256` profile is the pragmatic shared-secret profile defined in §10.3. It exists for simpler integrations that do not implement full RFC 9421 signing.
+
+Discovery MUST declare supported adapter-authentication profiles:
+
+```json
+{
+  "adapter_auth_methods": ["http_message_signatures", "hmac_sha256"],
+  "hmac_replay_window_seconds": 300
+}
+```
+
+### 10.3 trusted_adapter mode (hmac_sha256 profile)
 
 In `trusted_adapter` mode, only registered adapters may submit response receipts.
 
 The Action Owner MUST authenticate the adapter using at least one of:
 
 ```text
+http_message_signatures
 hmac_sha256
 mtls
 signed_jwt
@@ -575,13 +629,23 @@ The Action Owner MUST reject timestamps outside a 5-minute replay window unless 
 
 The Action Owner MUST reject nonce reuse within the replay window.
 
+For the `hmac_sha256` profile, nonce uniqueness scope is:
+
+```text
+(adapter_id, nonce)
+```
+
+The Action Owner MUST store used nonces for at least `hmac_replay_window_seconds`.
+
+The Action Owner MUST NOT accept nonce reuse within that window.
+
 Adapter authentication failure MUST return `401`.
 
 Adapter authorization failure MUST return `403`.
 
 Responder authorization failure MUST NOT use HTTP `403` in `trusted_adapter` mode. It MUST return `200` with outcome `quarantined` or `sender_unauthorized`.
 
-### 10.3 public_ingest mode
+### 10.4 public_ingest mode
 
 In `public_ingest` mode, the endpoint may receive raw channel events directly from the public internet.
 
@@ -2469,7 +2533,27 @@ Potential future extensions:
 
 ---
 
-## 41. One-sentence definition
+## 41. v1.1 backlog
+
+The following work tracks are deferred to v1.1. They are listed here as named tracks so that v1.0 conformance does not depend on them and so that v1.1 work has a stable starting point.
+
+```text
+ROP-Email-Profile-Detail
+- Map RFC 5322 Message-ID, In-Reply-To, References, Reply-To, RFC 5233 subaddressing, custom X-ROP headers, and provider fields such as MailboxHash into ROP extraction precedence.
+
+ROP-Webhook-Idempotency-Aliases
+- Define provider-native aliases for receipt_idempotency_key, including GitHub X-GitHub-Delivery, Twilio MessageSid, Stripe event IDs, Slack event_id, and optional HTTP Idempotency-Key alignment.
+
+ROP-Quoted-History-Parser-Profiles
+- Publish named parser profiles for provider-stripped replies, Postmark-style stripped text, GitHub-style quoted stripping, email_reply_parser, and Talon-like parsing.
+
+ROP-Authentication-Results-Passthrough
+- Allow adapters to pass Authentication-Results-style mail-auth metadata into sender.verification_method and verification evidence.
+```
+
+---
+
+## 42. One-sentence definition
 
 ROP is a transport-neutral protocol for turning replies from humans, agents, and services into deterministic, authorized, idempotent, race-safe action-lifecycle events.
 
@@ -2535,4 +2619,7 @@ Recommended changelog entry:
 - Added inline F01-F04 conformance fixtures.
 - Added explicit HMAC body hash canonicalization.
 - Added threat model, tenant isolation, privacy-bounded responses, and conformance fixtures.
+- S6: Added `http_message_signatures` (RFC 9421) adapter-auth profile alongside `hmac_sha256`; tightened HMAC nonce uniqueness scope to (adapter_id, nonce) for `hmac_replay_window_seconds`.
+- S11: Added token-body purity rule prohibiting tenant, action, sender, recipient, agent, timestamp, business, or PII data in the token body; meaning lives only in the registration record.
+- Deferred ROP-Email-Profile-Detail, ROP-Webhook-Idempotency-Aliases, ROP-Quoted-History-Parser-Profiles, and ROP-Authentication-Results-Passthrough to v1.1 backlog (§41).
 ```
