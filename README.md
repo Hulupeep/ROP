@@ -208,6 +208,25 @@ Three things ROP gives agents that ad-hoc reply handling does not:
 - **Delegation safety (§33).** Agent registrations carry a `delegation_id`. If the human revokes the delegation, all the agent's pending registrations created under that delegation are revoked automatically. No zombie agents completing actions after the principal has fired them.
 - **Scoped authority (§16).** Authorization policies bound what a delegation can complete. If an agent's delegation covers $100 approvals, a $10,000 invoice reply falls into manual review by policy, not by the agent's own logic.
 
+### Multi-channel orchestration
+
+ROP decouples the action from the channel. One registration, many delivery surfaces:
+
+```json
+POST /rop/v1/registrations
+{
+  "action": { "id": "act_123", "title": "Approve Q3 budget" },
+  "channels": ["email", "telegram"],
+  "completion": { "mode": "first_valid_reply", "...": "..." }
+}
+```
+
+The email adapter embeds the token in subject + `X-ROP-Token` header. The Telegram adapter embeds it in hidden metadata or a visible footer. Whichever channel the human responds on first wins under `first_valid_reply`. The registration becomes `consumed`. The other channel's later reply returns `duplicate` or `audited_only` per `after_completion_policy`. No double-completion. No cross-channel race condition for the application to handle.
+
+**Channel escalation.** If a Telegram message goes unanswered for two hours, the agent re-sends the same token via email. Same registration, same token, different delivery truck. The agent does not create a new "email task" — it is the same action.
+
+**The world as a tool.** From the agent's view, "ask a human for approval" is a single call regardless of whether the human answers on their phone, in their inbox, or via SMS. ROP turns email, Telegram, SMS, and webhooks into one reliable interface the agent can call with the same shape as a local function.
+
 ### ROP and MCP
 
 MCP and ROP solve different halves of the agent stack:
