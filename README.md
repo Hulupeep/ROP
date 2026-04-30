@@ -366,15 +366,16 @@ Spec section: §28.
 
 [heystax.ai](https://heystax.ai) is the reference implementation. Source code is closed for now; the spec is open.
 
-What heystax.ai demonstrates:
+HeyStax demonstrates ROP across four channels in production:
 
-- ROP-Core, ROP-Email, ROP-Hosted-Inbox, and ROP-Agent profiles
-- Email channel via AgentMail (Postmark and SES adapters in roadmap)
-- Foreign LLM registration tested against Claude.ai, ChatGPT, and Cursor
-- People-graph (`stax_people`) lifecycle with three trust tiers feeding the `scope_participant` authorization rule
-- Visibility propagation (action state stax-wide; evidence restricted by default)
-- Operator dead-letter queue with replay paths
-- Quoted-history detection in email threads
+- **Email** — outbound via AgentMail; tokens in subject, `X-ROP-Token` header, and `Reply-To` routing handle; quoted-history detection on inbound
+- **Hosted inbox** — agents have stable AgentMail addresses; replies normalize to ROP receipts
+- **Agent** — foreign LLM tools (Claude.ai, ChatGPT, Cursor) call `/rop/v1/registrations` against the user's delegated agent identity
+- **Stax** — the work-container itself is a channel. Members reply by commenting on a stax with the token; the in-app surface produces a ROP receipt the same way an email reply does. Implemented under ROP's `hosted_inbox` channel profile.
+
+The stax channel is the cleanest live demonstration of ROP's multi-channel claim: one `first_valid_reply` registration accepts a reply via email, AgentMail inbox, or stax comment — whichever the human picks first wins. No application code branches on channel.
+
+Stax membership separately feeds the `scope_participant` authorization rule with three trust tiers, so authorization is workspace-scoped without per-action allowlists. Visibility propagates stax-wide (action state visible to members; evidence restricted by default). The operator dead-letter queue with replay paths handles malformed receipts.
 
 If you implement ROP and want compatibility testing against heystax.ai, open an issue.
 
