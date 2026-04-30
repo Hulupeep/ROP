@@ -335,6 +335,7 @@ Spec section: §28.
 |---|---|
 | [rop-v1-rc1-protocol.md](./rop-v1-rc1-protocol.md) | Full normative specification |
 | [about.md](./about.md) | Agentic-era explainer with the Resume primitive, layer-cake architecture, and ten worked scenarios |
+| [case-study-heystax.md](./case-study-heystax.md) | Explainable trail from the spec to the HeyStax reference implementation; spec section → epic → status, and the alignment punch list |
 | [security.md](./security.md) | Threat model and operator checklist (companion to spec §28) |
 | [conformance.md](./conformance.md) | Requirement → spec § → fixture map |
 | [priorart.md](./priorart.md) | Prior-art review across standards, vendor APIs, OSS, and the patent landscape |
@@ -378,6 +379,8 @@ HeyStax demonstrates ROP across four channels in production:
 The stax channel is the cleanest live demonstration of ROP's multi-channel claim: one `first_valid_reply` registration accepts a reply via email, AgentMail inbox, or stax comment — whichever the human picks first wins. No application code branches on channel.
 
 Stax membership separately feeds the `scope_participant` authorization rule with three trust tiers, so authorization is workspace-scoped without per-action allowlists. Visibility propagates stax-wide (action state visible to members; evidence restricted by default). The operator dead-letter queue with replay paths handles malformed receipts.
+
+**Explainable trail:** [case-study-heystax.md](./case-study-heystax.md) maps each spec section to the HeyStax epic or story that implements it, with honest alignment status — including the v0.1 → RC1 wire-format work HeyStax still has open. The public spec is the contract; HeyStax is the proof; the case study is how a reader follows from one to the other.
 
 If you implement ROP and want compatibility testing against heystax.ai, open an issue.
 

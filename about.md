@@ -35,7 +35,52 @@ graph TD
 
 ---
 
+## Channel Polymorphism: Unified Interaction Surface
+
+One of ROP's most powerful features is **Channel Agnosticism**. In the Agentic Era, the "Channel" (Email, Telegram, SMS) is just a variable. The **Action** and the **Human** are the constants.
+
+ROP allows you to "Fan-out" a request across multiple channels and "Fan-in" the first valid response to a single deterministic outcome.
+
+```mermaid
+graph LR
+    subgraph "The Outbound Fan-out"
+    A[Agent] --> B[ROP Registration]
+    B --> C1[Email Adapter]
+    B --> C2[Telegram Adapter]
+    B --> C3[SMS Adapter]
+    end
+
+    C1 --> D1((Human))
+    C2 --> D1
+    C3 --> D1
+
+    subgraph "The Inbound Fan-in (Atomic Lock)"
+    D1 -- "Approve" via Telegram --> E[ROP Resolve]
+    D1 -- "Yes" via Email --> F[ROP Reject/Duplicate]
+    E --> G[State: Complete]
+    end
+```
+
+### The "Substitution" Effect
+If an agent detects a user is inactive on Telegram, it can "escalate" by sending the same ROP token via Email. To the agent, this is the same task. To ROP, this is the same token. The first channel to return a valid response "wins" the lock, and the other becomes an audit-only trail.
+
+---
+
 ## 10 Scenarios for the Agentic Era
+... (existing scenarios) ...
+
+---
+
+## Theses for the Agentic Era
+
+### 1. The Distributed Lock for Human Attention
+Human attention is a finite resource. ROP acts as a **distributed lock** for that attention. It ensures that regardless of how many "pings" a human receives across Slack, Email, or SMS, the underlying business action can only be "unlocked" (completed) exactly once. It solves the "Attention Race" condition.
+
+### 2. ROP as the "Anti-Phishing" for AI
+As agents begin to act on our behalf, the risk of "Agentic Phishing" (forging a reply to trick an agent) skyrockets. ROP tokens are **Capability URLs** for human intent. If a reply doesn't carry a valid, authorized token, the agent doesn't just "guess"—it rejects the interaction at the protocol layer.
+
+### 3. Beyond the Chat Box
+Most AI today is trapped in a "Chat Window." ROP is the protocol that allows agents to become **Ambient**. They can reach out into the world, plant an "expectation" (the token), and go to sleep. They don't need to live in a persistent socket; they live in the **Lifecycle of the Action**.
 
 ### 1. The Multi-Step Financial Approval
 An agent prepares a $50k purchase order. It needs approval from both the Dept. Head and the CFO. ROP tracks both registrations; the agent "suspends" until both ROP outcomes return `completed`.
