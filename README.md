@@ -166,6 +166,8 @@ You probably should not, yet. RC1 is for people who:
 3. Want to contribute to v1.0 final hardening
 4. Are building agentic systems that need cross-channel correlation
 
+> **What "typed" means here.** A *typed* work-graph is one where actions have defined kinds (e.g., "approve invoice", "confirm meeting"), lifecycle states the system tracks (`open` → `awaiting_response` → `complete` → `deleted`), and relationships such as dependencies and supersession. Freeform places — a Slack channel, an email inbox, a Google Doc — are *untyped*. ROP needs typed actions because "complete the action" has to mean something to the system; there is nothing for it to anchor to in an untyped stream.
+
 If you are building a customer-facing product on top of the work graph, wait for v1.0 final.
 
 If you are building infrastructure, agent runtimes, or research systems, RC1 is usable.
