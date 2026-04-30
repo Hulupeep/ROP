@@ -2,6 +2,8 @@
 
 > **Status: v1.0 Release Candidate 1** (2026-04-29). Spec: [rop-v1-rc1-protocol.md](./rop-v1-rc1-protocol.md). Reference implementation: [heystax.ai](https://heystax.ai). Wire format and endpoints are stable for RC1; minor field additions possible before v1.0 final.
 
+**Reply-to-complete, made deterministic.** Like OAuth, but for async replies across email, chat, SMS, webhooks, and agent mailboxes.
+
 **ROP** is a transport-neutral, application-layer protocol for turning replies from humans, agents, and services into deterministic, authorized, idempotent, race-safe action-lifecycle events.
 
 It sits above transport (email, chat, SMS, webhooks, hosted inboxes, agent mailboxes) and below business workflows. It does not replace any of them. It standardizes the handshake between an outbound action request and the inbound response that may complete, comment on, review, reject, or audit it.
@@ -168,6 +170,13 @@ If you are building a customer-facing product on top of the work graph, wait for
 
 If you are building infrastructure, agent runtimes, or research systems, RC1 is usable.
 
+### When NOT to use ROP
+
+- **Synchronous-only agents.** Chat-with-PDF, in-browser tool use, no waiting. MCP is the right fit.
+- **One-shot contact forms.** A direct inbound webhook into a CRM is enough.
+- **Single-vendor, single-channel.** If you only ever process Postmark inbound or only ever process GitHub webhooks, the vendor's native dedup and signing are sufficient.
+- **You have no work-graph.** ROP completes typed actions. If your system has no notion of action lifecycle, ROP has nothing to anchor to.
+
 ---
 
 ## Conformance profiles
@@ -184,6 +193,31 @@ A conforming implementation declares which profiles it supports. ROP-Core is req
 | **ROP-Agent** | Agent identity in requester and sender, delegation references, scoped action authority, delegation expiry |
 
 Spec sections: §35.1 through §35.6.
+
+---
+
+## ROP for agents
+
+Agents are good at planning; they are poor at *waiting*. When an agent sends a request through email, chat, or SMS and needs to suspend until a reply arrives, today's options are bad: keep the agent in memory polling, or stitch together per-channel webhook plumbing.
+
+ROP turns the reply into a **structured interrupt**. The agent registers an expectation, suspends, and is woken by the deterministic outcome of `POST /rop/v1/responses`. No polling, no per-channel reimplementation, no guessing whether a "👍" meant "approve the invoice" or "I saw your message" — the registration's completion policy resolves intent into state.
+
+Three things ROP gives agents that ad-hoc reply handling does not:
+
+- **Resume primitive.** Register expectation → suspend → reply triggers resume. The protocol is the wakeup; the agent owns no transport state and burns no tokens re-reading thread history to reconstruct context.
+- **Delegation safety (§33).** Agent registrations carry a `delegation_id`. If the human revokes the delegation, all the agent's pending registrations created under that delegation are revoked automatically. No zombie agents completing actions after the principal has fired them.
+- **Scoped authority (§16).** Authorization policies bound what a delegation can complete. If an agent's delegation covers $100 approvals, a $10,000 invoice reply falls into manual review by policy, not by the agent's own logic.
+
+### ROP and MCP
+
+MCP and ROP solve different halves of the agent stack:
+
+- **MCP** is the **inner loop**: agent ↔ local tool, synchronous, function-call-shaped.
+- **ROP** is the **outer loop**: agent ↔ world, asynchronous, reply-shaped.
+
+If you are building chat-with-PDF, you do not need ROP. If you are building an agent that manages a supply chain, coordinates calendars, runs procurement, or asks humans for approvals across days, you need both.
+
+The **ROP-Agent** conformance profile (§35.6) bundles agent identity in requester and sender fields, delegation references, scoped action authority, and delegation expiry validation. Full agentic narrative and ten worked scenarios in [about.md](./about.md).
 
 ---
 
@@ -224,6 +258,8 @@ Eight scenarios where ROP is the right primitive.
 | Cross-channel substitution | no | no | no | no | yes |
 
 Each existing tool has a piece. ROP combines them at the protocol layer.
+
+**On MCP specifically:** MCP defines the synchronous inner loop (agent ↔ local tool, function-call-shaped). ROP defines the asynchronous outer loop (agent ↔ world, reply-shaped). They compose; the same agent uses both.
 
 ---
 
@@ -277,6 +313,7 @@ Spec section: §28.
 | Path | What it is |
 |---|---|
 | [rop-v1-rc1-protocol.md](./rop-v1-rc1-protocol.md) | Full normative specification |
+| [about.md](./about.md) | Agentic-era explainer with the Resume primitive, layer-cake architecture, and ten worked scenarios |
 | [security.md](./security.md) | Threat model and operator checklist (companion to spec §28) |
 | [conformance.md](./conformance.md) | Requirement → spec § → fixture map |
 | [priorart.md](./priorart.md) | Prior-art review across standards, vendor APIs, OSS, and the patent landscape |
