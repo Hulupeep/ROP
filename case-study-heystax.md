@@ -91,6 +91,17 @@ Three checkpoints:
 
 When all three are true, HeyStax is a verifiable reference implementation. Until then, this doc is the honest accounting of where the implementation stands relative to the contract.
 
+## Alignment status of HeyStax stories
+
+As of 2026-04-30, all twelve ROP-related tabstax issues — the two epics (#567, #572) and the ten child stories (#568, #569, #570, #573, #574, #575, #576, #577, #578, #579) — carry a uniform "ROP v1.0-RC1 Alignment" block at the top of their body that:
+
+- Names the public RC1 spec at github.com/Hulupeep/ROP as the canonical protocol contract
+- Provides the v0.1 → RC1 wire format mappings (token format, paths, field names, authorization flags, adapter-auth profiles)
+- Names the invariants every story MUST satisfy (token-body purity §7.5, forbidden combination §15.1.1, quoted-history rejection §9.2, idempotency §19, atomic locking, privacy-bounded outcomes)
+- Links back to this case study and to the F01-F15 fixtures as the conformance gate
+
+The alignment block makes the spec → implementation contract visible from inside each ticket without dropping to the case study. Implementers see the canonical wire format the moment they open the story.
+
 ## What this case study replaces
 
 Before this doc existed, both the public ROP repo and the HeyStax tabstax repo described the protocol from their own side without a bridge. The Notion PRD `Action Response Primitive PRD v1.0` was the canonical source for #567 and #572. That made sense pre-RC1; it does not anymore.
